@@ -19,7 +19,7 @@ CFLAGS = -Wall -O2 -DOS_$(OS)
 LIBS = -lusb
 PACK = gzip -k $(PROG)
 else ifeq ($(OS), MACOSX)
-TARGET = $(PROG).dmg
+TARGET = $(PROG).mac.zip 
 SDK = /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.11.sdk/
 ARCH = -mmacosx-version-min=10.5 -arch i386
 CC = gcc
@@ -52,14 +52,17 @@ $(PROG).exe: $(PROG)
 	$(PACK)
 
 $(PROG).dmg: $(PROG)
-	mkdir tmp
+	mkdir -p tmp
 	cp $(PROG) tmp
 	hdiutil create -ov -volname "Raw HID Test" -srcfolder tmp $(PROG).dmg
+
+$(PROG).mac.zip: $(PROG)
+	zip $(PROG).mac.zip $(PROG)
 
 hid.o: hid_$(OS).c hid.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -f *.o $(PROG) $(PROG).exe $(PROG).dmg $(PROG).zip $(PROG).gz
+	rm -f *.o $(PROG) $(PROG).exe $(PROG).dmg $(PROG).mac.zip $(PROG).zip $(PROG).gz
 	rm -rf tmp
 
