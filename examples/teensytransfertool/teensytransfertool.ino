@@ -9,15 +9,20 @@
 
 const int FlashChipSelect = 6;
 
-void setup() {
-  //uncomment these if using Teensy audio shield
-  //SPI.setSCK(14);  // Audio shield has SCK on pin 14
-  //SPI.setMOSI(7);  // Audio shield has MOSI on pin 7
+void setup() 
+{
 
- //remove unneeded / not connected devices here:
+//>>>UNCOMMENT THESE IF USING THE TEENSY AUDIO SHIELD
+
+//  SPI.setSCK(14);  // Audio shield has SCK on pin 14
+//  SPI.setMOSI(7);  // Audio shield has MOSI on pin 7
+
+
+//>>>REMOVE unneeded / not connected devices here:
+
   eeprom_initialize();
- // SerialFlash.begin(FlashChipSelect);
- // ParallelFlash.begin();
+// SerialFlash.begin(FlashChipSelect);
+// ParallelFlash.begin();
 
 }
 
