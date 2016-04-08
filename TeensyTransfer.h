@@ -34,7 +34,7 @@
 
 /***********************************************************************/
 
-
+#include <Arduino.h>
 #include <mk20dx128.h>
 #include <avr_functions.h>
 
