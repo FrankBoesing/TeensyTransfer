@@ -21,8 +21,7 @@ void setup()
 //>>>REMOVE unneeded / not connected devices here:
 
   eeprom_initialize();
-// SerialFlash.begin(FlashChipSelect);
-// ParallelFlash.begin();
+  SerialFlash.begin(FlashChipSelect);
 
 }
 
