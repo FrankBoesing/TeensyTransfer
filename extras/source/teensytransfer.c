@@ -77,13 +77,13 @@ void usage(const char *err)
 }
 
 void debug(void) __attribute__((__unused__));
-void debug(void) 
+void debug(void)
 {
 	printf("USB:");
 	int i;
 	for (i=0;i<sizeof(buf);i++) printf("%x ",buf[i]);
 	printf("\n");
-}	
+}
 
 void parse_flag(char *arg)
 {
@@ -129,7 +129,7 @@ void parse_options(int argc, char **argv)
 			}
 			else parse_flag(arg);
 		}
-		else if (strcmp("serflash", arg) == 0) device = 0;		
+		else if (strcmp("serflash", arg) == 0) device = 0;
 		else if (strcmp("parflash", arg) == 0) device = 2;
 		else if (strcmp("eeprom", arg) == 0) device = 253;
 		else if (strcmp("teensy", arg) == 0) device = 254;
@@ -207,7 +207,7 @@ void serflash_write(void) {
   int sz,r, pos, dotcnt;
   char * buffer;
   char *basec, *bname;
-	
+
 	fp = fopen(fname, "rb");
 	if (fp == NULL) {
 		fprintf(stderr, "Unable to open %s\n\n", fname);
@@ -235,7 +235,7 @@ void serflash_write(void) {
 	basec = strdup(fname);
 	bname = basename(basec);
 
-	r =  MIN(strlen(bname),31);
+	r =  MIN(strlen(bname),63);
 	strncpy((char*)buf, bname, r);
 	buf[r]=0;
 	hid_sendWithAck();
@@ -298,7 +298,7 @@ void serflash_read(void) {
 
 	sz = (buf[1] << 24) | (buf[2] << 16) | (buf[3] << 8) | buf[4];
 	//printf("size:%d %d %d %d %d\r\n",sz, buf[1], buf[2], buf[3], buf[4]);
-	
+
 	pos = 0;
 	do {
 		hid_rcvWithAck();
@@ -307,7 +307,7 @@ void serflash_read(void) {
 		pos+= r;
 		if (r) fwrite(buf, r, 1, stdout);
 	} while (pos<sz);
-	
+
 };
 
 void serflash_list(void) {
@@ -321,9 +321,9 @@ uint32_t sz;
 	while (1) {
 		hid_rcvWithAck();
 		if (buf[0]==0) break;
-		sz = (buf[1] << 24) | (buf[2] << 16) | (buf[3] << 8) | buf[4];				
-		hid_rcvWithAck();						
-		printf("%8d %s\n", sz, buf);		
+		sz = (buf[1] << 24) | (buf[2] << 16) | (buf[3] << 8) | buf[4];
+		hid_rcvWithAck();
+		printf("%8d %s\n", sz, buf);
 	}
 
 
@@ -357,9 +357,9 @@ int t = 0;
 	buf[0] = mode;
 	buf[1] = device;
 	hid_sendWithAck();
-	
-	do {		
-		DELAY( timeToSleep ); 
+
+	do {
+		DELAY( timeToSleep );
 		buf[0] = 99;
 		buf[1] = device;
 		hid_sendWithAck();
@@ -376,8 +376,8 @@ int t = 0;
 };
 
 void serflash_info(void) {
-int n;	
-uint32_t sz;	
+int n;
+uint32_t sz;
 //	printf("info");
 	buf[0] = mode;
 	buf[1] = device;
@@ -385,9 +385,9 @@ uint32_t sz;
 
 	n = rawhid_recv(hid_device, buf, sizeof(buf), timeout);
 	if (n < 1) commErr();
-	
+
 	printf("ID    : %02X %02X %02X\n", buf[8], buf[9], buf[10] );
-	printf("Serial: %02X %02X %02X %02X %02X %02X %02X %02X\n", buf[16],buf[17],buf[18],buf[19],buf[20],buf[21],buf[22],buf[23]);	
+	printf("Serial: %02X %02X %02X %02X %02X %02X %02X %02X\n", buf[16],buf[17],buf[18],buf[19],buf[20],buf[21],buf[22],buf[23]);
 	sz = (buf[1] << 24) | (buf[2] << 16) | (buf[3] << 8) | buf[4];
 	printf("Size  : %d Bytes\n", sz);
 	//debug();
@@ -407,7 +407,7 @@ void eeprom() {
 	//case 4 : extflash_erase();break; todo...
 	default: die("Command not supported by device");
   }
-  
+
 }
 
 void eeprom_write(void) {
@@ -434,13 +434,13 @@ void eeprom_write(void) {
 	buf[0] = mode;
 	buf[1] = device;
 	hid_sendWithAck();
-	
+
 	//check size of eeprom
 	hid_rcvWithAck();
 	szee = (buf[1] << 24) | (buf[2] << 16) | (buf[3] << 8) | buf[4];
 	if (szee < sz) die("File is too large");
 	if (szee < sizeof(buf)) die("Minimum EEPROM size is 64 Bytes" );
-	
+
 	// allocate memory to contain the whole file:
 	buffer = (char*) malloc (sizeof(char) * sz);
 	if (buffer == NULL) die ("Memory error");
@@ -479,7 +479,7 @@ void eeprom_read(void) {
 
 	hid_rcvWithAck();
 	sz = (buf[1] << 24) | (buf[2] << 16) | (buf[3] << 8) | buf[4];
-	
+
 
 	pos = 0;
 
@@ -488,7 +488,7 @@ void eeprom_read(void) {
 		r = sz - pos;
 		if (r > sizeof(buf)) r = sizeof(buf);
 		pos+= r;
-		if (r) fwrite(buf, r, 1, stdout);		
+		if (r) fwrite(buf, r, 1, stdout);
 	} while (pos<sz);
 }
 
@@ -496,19 +496,19 @@ void eeprom_read(void) {
   Teensy
 ************************************************************************************************************/
 void teensy(void) {
-  unsigned sz;	
+  unsigned sz;
 	if (mode!=9) die("Command not supported by device");
 	buf[0] = mode;
 	buf[1] = device;
 	hid_sendWithAck();
 	rawhid_recv(hid_device, buf, sizeof(buf), timeout);
-	
+
 	printf("Model : ");
 	switch (buf[0]) {
 		case 1: printf("Teensy 3.0 (MK20DX128)");break;
 		case 2: printf("Teensy 3.1/3.2 (MK20DX256)");break;
 		case 3: printf("Teensy LC (MKL26Z64)");break;
-		case 4: printf("?? (MK64FX512)");break; 
+		case 4: printf("?? (MK64FX512)");break;
 		case 5: printf("?? (MK66FX1M0)");break;
 		default: printf("unknown");break;
 	}
@@ -516,12 +516,12 @@ void teensy(void) {
 
 	sz = buf[61]<<16 | buf[62]<<8 | buf[63];
 	printf("Serial: %d\n",sz);
-	
+
 	printf("MAC   : %02X:%02X:%02X:%02X:%02X:%02X\n",buf[58],buf[59],buf[60],buf[61],buf[62],buf[63]);
-	
+
 	sz = (buf[1] << 24) | (buf[2] << 16) | (buf[3] << 8) | buf[4];
 	printf("EEPROM: %d Bytes\n",sz);
-	
+
 	sz = (buf[16] << 24) | (buf[17] << 16) | (buf[18] << 8) | buf[19];
 	printf("F_CPU : %d Hz\n",sz);
 
@@ -532,7 +532,7 @@ void teensy(void) {
 	printf("F_BUS : %d Hz\n",sz);
 
 	sz = (buf[28] << 24) | (buf[29] << 16) | (buf[30] << 8) | buf[31];
-	printf("F_MEM : %d Hz",sz);	
+	printf("F_MEM : %d Hz",sz);
 	//debug();
 }
 
@@ -542,13 +542,13 @@ int main(int argc, char **argv)
 
 #if defined(OS_WINDOWS)
 	setmode(fileno(stdout), O_BINARY);
-#endif   
+#endif
 
 	parse_options(argc, argv);
 
-	if ( (mode == 0 || mode == 1 || mode == 3) && (fname==NULL)  && (device<200)) usage("Filename required");	
+	if ( (mode == 0 || mode == 1 || mode == 3) && (fname==NULL)  && (device<200)) usage("Filename required");
 	if ((mode==2 || mode == 4 || mode==9) && fname != NULL) usage("Filename not allowed");
-	
+
 
 	int r;
 	// C-based example is 16C0:0480:FFAB:0200
@@ -560,7 +560,7 @@ int main(int argc, char **argv)
 			die("no rawhid device found\n");
 		}
 	}
- 
+
 	//clock_t t = clock();
 
 	switch(device) {

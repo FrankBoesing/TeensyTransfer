@@ -13,10 +13,10 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above description, website URL and copyright notice and this permission
  * notice shall be included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -72,7 +72,7 @@
 // Puppy 4.3: no hidraw devices (has hiddev), 2.6.30.5 kernel
 // Damn Small 4.4.10: (would not boot)
 // Gentoo 10.0-test20090926: (would not boot)
-// PCLinuxOS 2009.2: (would not boot) 
+// PCLinuxOS 2009.2: (would not boot)
 // Slackware: (no live cd available?  www.slackware-live.org dead)
 
 
@@ -245,7 +245,7 @@ int rawhid_open(int max, int vid, int pid, int usage_page, int usage)
 					if (parsed_usage_page && parsed_usage) break;
 				}
 				if ((!parsed_usage_page) || (!parsed_usage) ||
-				  (usage_page > 0 && parsed_usage_page != usage_page) || 
+				  (usage_page > 0 && parsed_usage_page != usage_page) ||
 				  (usage > 0 && parsed_usage != usage)) {
 					usb_release_interface(u, i);
 					continue;
