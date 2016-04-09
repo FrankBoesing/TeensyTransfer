@@ -34,7 +34,7 @@
 
 /***********************************************************************/
 
-#include <Arduino.h>
+
 #include <mk20dx128.h>
 #include <avr_functions.h>
 
@@ -62,6 +62,7 @@
 
 class TeensyTransfer {
 public:
+	int available(void) { return RawHID.available(); }
 	void transfer(void);
 private:
 	uint8_t buffer[64];// RawHID packets are always 64 bytes

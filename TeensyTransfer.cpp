@@ -26,26 +26,30 @@
 
 #if defined(KINETISK) || defined(KINETISL)
 
+#include "version.h"
 #include <arm_math.h>
 
 TeensyTransfer ttransfer;
 
+const unsigned int version = VERSION;
 
 void TeensyTransfer::transfer(void) {
   uint8_t device, mode;
   int n;
-	n = RawHID.recv(buffer, 0); // 0 timeout = do not wait
-	if (n<1) return;
-
-	mode = buffer[0];
-	device = buffer[1];
+    if (!RawHID.available()) return;
+	
+	RawHID.recv(buffer, 0);
+	
 	if ( hid_sendAck() < 0 ) {
 		//Serial.printf("timeout\n");
 		return;
 	}
 
+	mode = buffer[0];
+	device = buffer[1];
+	
 	switch (device) {
-#ifdef _HAVE_SERFLASH
+	#ifdef _HAVE_SERFLASH
 		case 0 : {				
 				switch (mode) {
 					case 0 : serflash_write();break;
@@ -317,6 +321,7 @@ void TeensyTransfer::serflash_erasedevice() {
 
 void TeensyTransfer::serflash_ready() {
 	buffer[0] = !SerialFlash.ready();
+	buffer[1] = 17; //magic
 	RawHID.send(buffer, 100);
 }
 
@@ -518,6 +523,7 @@ void TeensyTransfer::parflash_erasedevice() {
 
 void TeensyTransfer::parflash_ready() {
 	buffer[0] = !ParallelFlash.ready();
+	buffer[1] = 17; //magic
 	RawHID.send(buffer, 100);
 }
 
@@ -556,12 +562,26 @@ void TeensyTransfer::teensy_info(void) {
 		buffer[0]=0;
 		#endif
 
-		val32_buf((E2END) + 1,1);
+		//Compiled-in devices:
+		unsigned int d = 1 ; //Teensy
+		#ifdef _HAVE_EEPROM
+		d |= 2;
+		#endif
+		#ifdef _HAVE_SERFLASH
+		d |= 4;
+		#endif
+		#ifdef _HAVE_PARFLASH
+		d |= 8;
+		#endif
+		val32_buf(d,6); 		
+		val32_buf(version,10); 
+		
+		val32_buf((E2END) + 1,1);		
 		val32_buf(F_CPU,16);
 		val32_buf(F_PLL,20);
 		val32_buf(F_BUS,24);
 		val32_buf(F_MEM,28);
-
+				
 		//MAC
 		FTFL_FCCOB0 = 0x41;             // Selects the READONCE command
         FTFL_FCCOB1 = 0x0e;             // read the given word of read once area
