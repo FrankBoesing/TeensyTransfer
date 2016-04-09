@@ -23,7 +23,7 @@ unsigned int _CRT_fmode = _O_BINARY;
 #endif
 
 #include "hid.h"
-
+#include "version.h"
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
@@ -190,7 +190,19 @@ void serflash_delfile(void);
 void serflash_erase(void);
 void serflash_info(void);
 
+int serflash_ready(void) {
+	buf[0] = 99;
+	buf[1] = device;
+	hid_sendWithAck();
+	rawhid_recv(hid_device, buf, sizeof(buf), timeout);
+	if (buf[1] != 17 /*magic*/) die("Teensy is in a wrong state. Please restart it.");
+	return buf[0];
+}
+
 void serflash() {
+  //first, check access
+  if (serflash_ready()!=0) die("busy.");
+
   switch (mode) {
 	case 0 : serflash_write(); break;
 	case 1 : serflash_read();break;
@@ -360,11 +372,7 @@ int t = 0;
 
 	do {
 		DELAY( timeToSleep );
-		buf[0] = 99;
-		buf[1] = device;
-		hid_sendWithAck();
-		rawhid_recv(hid_device, buf, sizeof(buf), timeout);
-		if (buf[0]==0) break;
+		if (serflash_ready()==0) break;
 		if (++t >= 1000 /  timeToSleep / 2) {
 			printf(".");
 			fflush(stdout);
@@ -551,15 +559,32 @@ int main(int argc, char **argv)
 
 
 	int r;
-	// C-based example is 16C0:0480:FFAB:0200
-	r = rawhid_open(1, 0x16C0, 0x0480, 0xFFAB, 0x0200);
+	r = rawhid_open(1, 0x16C0, 0x0486, 0xFFAB, 0x0200);
 	if (r <= 0) {
-		// Arduino-based example is 16C0:0486:FFAB:0200
-		r = rawhid_open(1, 0x16C0, 0x0486, 0xFFAB, 0x0200);
-		if (r <= 0) {
-			die("no rawhid device found\n");
-		}
+		die("no rawhid device found\n");
 	}
+
+	//Get ID-data from Teensy
+	buf[0] = 9;
+	buf[1] = 254;
+	hid_sendWithAck();
+	rawhid_recv(hid_device, buf, sizeof(buf), timeout);
+
+	//Check version
+	#if 0
+	int teensyversion;
+	teensyversion = (buf[10] << 24) | (buf[11] << 16) | (buf[12] << 8) | buf[13];
+	if (VERSION !=  teensyversion) {
+		die("version conflict.\nPC (this): %d\nTeensy   : %d\n", VERSION, teensyversion);
+	}
+	#endif
+
+	//Check Teensy-compiled-in devices
+	unsigned int teensydevices;
+	teensydevices =  (buf[6] << 24) | (buf[7] << 16) | (buf[8] << 8) | buf[9];
+	if (device == 253 && !(teensydevices & 2)) die("Teensy has no eeprom support compiled-in.\nCheck TeensyTransfer.h");
+	if (device == 0 && !(teensydevices & 4)) die("Teensy has no serflash support compiled-in.\nCheck TeensyTransfer.h");
+	if (device == 2 && !(teensydevices & 8)) die("Teensy has no parflash support compiled-in.\nCheck TeensyTransfer.h");
 
 	//clock_t t = clock();
 
