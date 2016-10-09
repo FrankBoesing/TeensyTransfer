@@ -25,8 +25,6 @@ unsigned int _CRT_fmode = _O_BINARY;
 #include "hid.h"
 #include "version.h"
 
-#define MAX(x, y) (((x) > (y)) ? (x) : (y))
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 #define DOTCNTPACKETS 64 //Print a dot after x packets (64*64 bytes=4 KB)
 
@@ -34,6 +32,10 @@ const int timeout = 400;
 const int hid_device = 0;
 
 unsigned char buf[64];
+
+
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 // options (from user via command line args)
 int device = 0;
@@ -57,6 +59,7 @@ void usage(const char *err)
 {
 	if(err != NULL) fprintf(stderr, "%s\n\n", err);
 	fprintf(stderr,
+		"Compiled " __DATE__ " " __TIME__ "\n"
 		"Usage: teensytransfer [-w] [-r] [-l] [-d] [device] <file>\n"
 		"\t-w : write (default)\n"
 		"\t-r : read\n"
@@ -69,9 +72,10 @@ void usage(const char *err)
 		"\t Devices:\n"
 		"\tteensy\n"
 		"\tserflash (default)\n"
-		"\tparflash\n"
+//		"\tparflash\n"
 		"\teeprom\n"
 //		"\tsdcard\n"
+//		"\tdev0..dev7\n"
 		"");
 	exit(1);
 }
@@ -131,6 +135,14 @@ void parse_options(int argc, char **argv)
 		}
 		else if (strcmp("serflash", arg) == 0) device = 0;
 		else if (strcmp("parflash", arg) == 0) device = 2;
+		else if (strcmp("dev7", arg) == 0) device = 135;
+		else if (strcmp("dev6", arg) == 0) device = 134;
+		else if (strcmp("dev5", arg) == 0) device = 133;
+		else if (strcmp("dev4", arg) == 0) device = 132;
+		else if (strcmp("dev3", arg) == 0) device = 131;
+		else if (strcmp("dev2", arg) == 0) device = 130;
+		else if (strcmp("dev1", arg) == 0) device = 129;
+		else if (strcmp("dev0", arg) == 0) device = 128;
 		else if (strcmp("eeprom", arg) == 0) device = 253;
 		else if (strcmp("teensy", arg) == 0) device = 254;
 //		else if (strcmp("sdcard", arg) == 0) device = 3; todo...
@@ -408,7 +420,7 @@ uint32_t sz;
 void eeprom_write(void);
 void eeprom_read(void);
 
-void eeprom() {
+void eeprom(void) {
   switch (mode) {
 	case 0 : eeprom_write(); break;
 	case 1 : eeprom_read();break;
@@ -516,8 +528,8 @@ void teensy(void) {
 		case 1: printf("Teensy 3.0 (MK20DX128)");break;
 		case 2: printf("Teensy 3.1/3.2 (MK20DX256)");break;
 		case 3: printf("Teensy LC (MKL26Z64)");break;
-		case 4: printf("?? (MK64FX512)");break;
-		case 5: printf("?? (MK66FX1M0)");break;
+		case 4: printf("Teensy 3.5 (MK64FX512)");break;
+		case 5: printf("Teensy 3.6 (MK66FX1M0)");break;
 		default: printf("unknown");break;
 	}
 	printf("\n");
@@ -571,7 +583,7 @@ int main(int argc, char **argv)
 	rawhid_recv(hid_device, buf, sizeof(buf), timeout);
 
 	//Check version
-	#if 0
+	#if 1
 	int teensyversion;
 	teensyversion = (buf[10] << 24) | (buf[11] << 16) | (buf[12] << 8) | buf[13];
 	if (VERSION !=  teensyversion) {
@@ -586,11 +598,20 @@ int main(int argc, char **argv)
 	if (device == 0 && !(teensydevices & 4)) die("Teensy has no serflash support compiled-in.\nCheck TeensyTransfer.h");
 	if (device == 2 && !(teensydevices & 8)) die("Teensy has no parflash support compiled-in.\nCheck TeensyTransfer.h");
 
+
 	//clock_t t = clock();
 
 	switch(device) {
 		case 0:
-		case 2: serflash();break;
+		case 2:
+		case 128:
+		case 129:
+		case 130:
+		case 131:
+		case 132:
+		case 133:
+		case 134:
+		case 135: serflash();break;
 		case 253: eeprom();break;
 		case 254: teensy();break;
 		default: usage(NULL);
