@@ -37,7 +37,7 @@ void TeensyTransfer::transfer(void) {
   uint8_t device, mode;
   int n;
     if (!RawHID.available()) return;
-	
+	Serial.println("Info Request");
 	RawHID.recv(buffer, 0);
 	
 	if ( hid_sendAck() < 0 ) {
@@ -546,6 +546,7 @@ void TeensyTransfer::parflash_info(void) {
 #ifdef _HAVE_TEENSY
 
 void TeensyTransfer::teensy_info(void) {
+Serial.println("Info Request");
 		//Serial.println("Teensyinfo");
 		//Teensy Model
 		#if defined(__MK20DX128__)
@@ -553,7 +554,7 @@ void TeensyTransfer::teensy_info(void) {
 		#elif defined(__MK20DX256__)
 		buffer[0]=2;
 		#elif defined(__MKL26Z64__)
-		buffer[0]=3;
+		buffer[0]=3; erre
 		#elif defined(__MK64FX512__)
 		buffer[0]=4;
 		#elif defined(__MK66FX1M0__)
@@ -561,7 +562,7 @@ void TeensyTransfer::teensy_info(void) {
 		#else
 		buffer[0]=0;
 		#endif
-
+ddd
 		//Compiled-in devices:
 		unsigned int d = 1 ; //Teensy
 		#ifdef _HAVE_EEPROM
@@ -581,7 +582,7 @@ void TeensyTransfer::teensy_info(void) {
 		val32_buf(F_PLL,20);
 		val32_buf(F_BUS,24);
 		val32_buf(F_MEM,28);
-				
+/*
 		//MAC
 		FTFL_FCCOB0 = 0x41;             // Selects the READONCE command
         FTFL_FCCOB1 = 0x0e;             // read the given word of read once area
@@ -599,7 +600,7 @@ void TeensyTransfer::teensy_info(void) {
         buffer[61] = FTFL_FCCOB5;       // collect only the top three bytes,
         buffer[62] = FTFL_FCCOB6;       // in the right orientation (big endian).
         buffer[63] = FTFL_FCCOB7;       // Skip FTFL_FCCOB4 as it's always 0.
-
+*/
 		RawHID.send(buffer, 100);
 }
 #endif

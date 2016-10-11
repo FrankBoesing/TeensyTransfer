@@ -535,6 +535,7 @@ void teensy(void) {
 	printf("\n");
 
 	sz = buf[61]<<16 | buf[62]<<8 | buf[63];
+	if (sz < 10000000) sz = sz * 10;
 	printf("Serial: %d\n",sz);
 
 	printf("MAC   : %02X:%02X:%02X:%02X:%02X:%02X\n",buf[58],buf[59],buf[60],buf[61],buf[62],buf[63]);
