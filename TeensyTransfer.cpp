@@ -27,7 +27,6 @@
 #if defined(KINETISK) || defined(KINETISL)
 
 #include "version.h"
-#include <arm_math.h>
 
 TeensyTransfer ttransfer;
 
@@ -37,7 +36,7 @@ void TeensyTransfer::transfer(void) {
   uint8_t device, mode;
   int n;
     if (!RawHID.available()) return;
-	Serial.println("Info Request");
+	
 	RawHID.recv(buffer, 0);
 	
 	if ( hid_sendAck() < 0 ) {
@@ -130,14 +129,19 @@ int TeensyTransfer::hid_sendWithAck(void) {
 
 void TeensyTransfer::val32_buf(const uint32_t val,const uint32_t bufidx)
 {
-	uint32_t * p = (uint32_t*)&buffer[bufidx];
-	*p=__REV(val);
+	buffer[bufidx] = val >> 24;
+	buffer[bufidx+1] = val >> 16;
+	buffer[bufidx+2] = val >> 8;
+	buffer[bufidx+3] = val;
 }
 
 uint32_t TeensyTransfer::buf_val32(const uint32_t bufidx)
 {
-	uint32_t * p = (uint32_t*)&buffer[bufidx];
-	return __REV(*p);
+	return ( ((uint32_t)buffer[bufidx]<<24) | 
+			((uint32_t)buffer[bufidx+1]<<16) | 
+			((uint32_t)buffer[bufidx+2]<<8) | 
+			((uint32_t)buffer[bufidx+3])
+			);
 }
 
 /********************************************************************************
@@ -545,16 +549,14 @@ void TeensyTransfer::parflash_info(void) {
 ********************************************************************************/
 #ifdef _HAVE_TEENSY
 
-void TeensyTransfer::teensy_info(void) {
-Serial.println("Info Request");
-		//Serial.println("Teensyinfo");
+void TeensyTransfer::teensy_info(void) {		
 		//Teensy Model
 		#if defined(__MK20DX128__)
 		buffer[0]=1;
 		#elif defined(__MK20DX256__)
 		buffer[0]=2;
 		#elif defined(__MKL26Z64__)
-		buffer[0]=3; erre
+		buffer[0]=3;
 		#elif defined(__MK64FX512__)
 		buffer[0]=4;
 		#elif defined(__MK66FX1M0__)
@@ -562,7 +564,7 @@ Serial.println("Info Request");
 		#else
 		buffer[0]=0;
 		#endif
-ddd
+
 		//Compiled-in devices:
 		unsigned int d = 1 ; //Teensy
 		#ifdef _HAVE_EEPROM
@@ -582,7 +584,11 @@ ddd
 		val32_buf(F_PLL,20);
 		val32_buf(F_BUS,24);
 		val32_buf(F_MEM,28);
-/*
+		
+		__disable_irq();
+		
+#if defined(HAS_KINETIS_FLASH_FTFA) || defined(HAS_KINETIS_FLASH_FTFL)
+		
 		//MAC
 		FTFL_FCCOB0 = 0x41;             // Selects the READONCE command
         FTFL_FCCOB1 = 0x0e;             // read the given word of read once area
@@ -600,15 +606,38 @@ ddd
         buffer[61] = FTFL_FCCOB5;       // collect only the top three bytes,
         buffer[62] = FTFL_FCCOB6;       // in the right orientation (big endian).
         buffer[63] = FTFL_FCCOB7;       // Skip FTFL_FCCOB4 as it's always 0.
-*/
+
+#elif defined(HAS_KINETIS_FLASH_FTFE) //MK64/MK66
+
+// Does not work in HSRUN mode :
+#if F_CPU>120000000
+#error LOWER CPU SPEED TO 120MHz!!!
+#endif
+
+		
+		buffer[58] = 0x04;
+		buffer[59] = 0xE9; 
+		buffer[60] = 0xE5;
+
+		FTFL_FSTAT = FTFL_FSTAT_RDCOLERR | FTFL_FSTAT_ACCERR | FTFL_FSTAT_FPVIOL;
+		*(uint32_t *)&FTFL_FCCOB3 = 0x41070000;
+		FTFL_FSTAT = FTFL_FSTAT_CCIF;
+		while (!(FTFL_FSTAT & FTFL_FSTAT_CCIF)) ; // wait
+		uint32_t num = *(uint32_t *)&FTFL_FCCOBB;
+		buffer[61] = num >> 16;
+		buffer[62] = num >> 8;
+		buffer[63] = num;
+#endif
+		__enable_irq();
 		RawHID.send(buffer, 100);
+		
 }
 #endif
 
 /********************************************************************************
  EEPROM
 ********************************************************************************/
-#ifdef _HAVE_EEPROM
+ #ifdef _HAVE_EEPROM
 void TeensyTransfer::eeprom_read(void) {
   int n;
   size_t sz;
