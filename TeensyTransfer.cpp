@@ -611,7 +611,7 @@ void TeensyTransfer::teensy_info(void) {
 
 // Does not work in HSRUN mode :
 #if F_CPU>120000000
-#error LOWER CPU SPEED TO 120MHz!!!
+#error LOWER CPU SPEED TO 120MHz!!! ...or remove this line and know that the printed Serial and MAC will not be correct :)
 #endif
 
 		
