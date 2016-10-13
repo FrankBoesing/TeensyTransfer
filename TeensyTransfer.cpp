@@ -34,7 +34,6 @@ const unsigned int version = VERSION;
 
 void TeensyTransfer::transfer(void) {
   uint8_t device, mode;
-  int n;
     if (!RawHID.available()) return;
 	
 	RawHID.recv(buffer, 0);
